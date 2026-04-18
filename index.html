@@ -304,28 +304,62 @@ recordBtn.onclick = () => {
 };
 
 function startRecording() {
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
   recognition = new SpeechRecognition();
   recognition.lang = 'de-DE';
-  recognition.continuous = false;
-  recognition.interimResults = false;
+  recognition.continuous = !isSafari;
+  recognition.interimResults = !isSafari;
   recognition.maxAlternatives = 1;
 
-  recognition.onstart = () => { setRecordingUI(true); setStatus(''); };
+  let finalTranscript = '';
+
+  recognition.onstart = () => {
+    setRecordingUI(true);
+    setStatus(isSafari ? 'Sprich jetzt – Stopp tippen wenn fertig' : 'Sprich jetzt…');
+    finalTranscript = '';
+  };
 
   recognition.onresult = (e) => {
-    const text = e.results[0][0].transcript;
-    if (currentMode === 'normal') {
-      setOutput(text);
-    } else {
-      processWithClaude(text);
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) {
+        finalTranscript += e.results[i][0].transcript + ' ';
+      } else {
+        interim += e.results[i][0].transcript;
+      }
+    }
+    const display = (finalTranscript + interim).trim();
+    if (display) {
+      outputEl.textContent = display;
+      outputEl.classList.remove('empty');
+      setStatus(interim ? '…' : '');
     }
   };
 
+  recognition.onspeechend = () => { if (isSafari) recognition.stop(); };
+
   recognition.onerror = (e) => {
-    setStatus('Fehler: ' + e.error + (e.error === 'not-allowed' ? ' – Bitte Mikrofon erlauben.' : ''), true);
+    const msgs = {
+      'not-allowed': 'Mikrofon nicht erlaubt – Einstellungen → Safari → Mikrofon → erlauben.',
+      'no-speech': 'Kein Sprachsignal – bitte lauter sprechen.',
+      'network': 'Netzwerkfehler – Internet-Verbindung prüfen.',
+      'audio-capture': 'Kein Mikrofon gefunden.',
+    };
+    setStatus(msgs[e.error] || 'Fehler: ' + e.error, true);
   };
 
-  recognition.onend = () => setRecordingUI(false);
+  recognition.onend = () => {
+    setRecordingUI(false);
+    const text = finalTranscript.trim();
+    if (!text) { setStatus('Kein Text erkannt – nochmal versuchen.', true); return; }
+    if (currentMode !== 'normal') {
+      processWithClaude(text);
+    } else {
+      setOutput(text);
+      setStatus('');
+    }
+  };
+
   recognition.start();
 }
 
