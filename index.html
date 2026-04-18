@@ -149,6 +149,22 @@
     border-radius: var(--radius-sm); color: var(--text-dim); font-size: 14px; cursor: pointer;
   }
   .key-hint { font-size: 11px; color: var(--text-hint); margin-top: -10px; margin-bottom: 14px; }
+
+  .sub-buttons { display: none; gap: 12px; justify-content: center; }
+  .sub-buttons.visible { display: flex; }
+  .sub-btn {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 1px solid var(--border); background: var(--surface2);
+    color: var(--text-dim); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+  }
+  .sub-btn:active { transform: scale(0.92); }
+  .pause-btn.paused { background: var(--accent-dim); border-color: var(--accent); color: #5DCAA5; }
+  .stop-btn { color: #e05a3a; border-color: #5a2010; }
+  .stop-btn:active { background: var(--rage-dim); }
+  .timer-bar { width: 100%; max-width: 200px; height: 3px; background: var(--surface2); border-radius: 2px; overflow: hidden; display: none; }
+  .timer-bar.visible { display: block; }
+  .timer-fill { height: 100%; background: var(--accent); width: 100%; transition: width linear; }
 </style>
 </head>
 <body>
@@ -203,6 +219,14 @@
         <line x1="8" y1="22" x2="16" y2="22"/>
       </svg>
     </button>
+    <div class="sub-buttons" id="subButtons">
+      <button class="sub-btn pause-btn" id="pauseBtn" title="Pause">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+      </button>
+      <button class="sub-btn stop-btn" id="stopBtn" title="Fertig">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+      </button>
+    </div>
     <div class="record-label" id="recordLabel">Tippen zum Starten</div>
   </div>
 
@@ -296,83 +320,174 @@ function setOutput(text) {
   copyBtn.disabled = false;
 }
 
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const subButtons = document.getElementById('subButtons');
+const pauseBtn = document.getElementById('pauseBtn');
+const stopBtn = document.getElementById('stopBtn');
+let finalTranscript = '';
+let isPaused = false;
+let silenceTimer = null;
+const SILENCE_TIMEOUT = 12000;
+
 function setRecordingUI(active) {
   isRecording = active;
   recordBtn.classList.toggle('recording', active);
-  recordLabel.textContent = active ? 'Tippen zum Stoppen' : 'Tippen zum Starten';
-  recordLabel.classList.toggle('active', active);
+  subButtons.classList.toggle('visible', active);
   micIcon.setAttribute('stroke', active ? '#e05a3a' : '#f0f0f0');
+  if (!active) {
+    isPaused = false;
+    pauseBtn.classList.remove('paused');
+    recordLabel.textContent = 'Tippen zum Starten';
+    recordLabel.classList.remove('active');
+  } else {
+    recordLabel.classList.add('active');
+  }
 }
 
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+function resetSilenceTimer() {
+  clearTimeout(silenceTimer);
+  if (isRecording && !isPaused) {
+    silenceTimer = setTimeout(() => {
+      if (recognition && isRecording && !isPaused) {
+        finishRecording();
+      }
+    }, SILENCE_TIMEOUT);
+  }
+}
+
+function finishRecording() {
+  clearTimeout(silenceTimer);
+  if (recognition) recognition.stop();
+}
 
 recordBtn.onclick = () => {
   if (!SpeechRecognition) {
-    setStatus('Spracherkennung nicht verfügbar. Bitte Safari 14.5+ oder Chrome verwenden.', true);
+    setStatus('Spracherkennung nicht verfügbar.', true);
     return;
   }
-  if (isRecording) { recognition && recognition.stop(); return; }
+  if (isRecording && !isPaused) {
+    finishRecording();
+    return;
+  }
+  if (isRecording && isPaused) {
+    resumeRecording();
+    return;
+  }
   startRecording();
 };
 
+stopBtn.onclick = () => { finishRecording(); };
+
+pauseBtn.onclick = () => {
+  if (isPaused) { resumeRecording(); }
+  else { pauseRecording(); }
+};
+
+function pauseRecording() {
+  isPaused = true;
+  clearTimeout(silenceTimer);
+  if (recognition) recognition.stop();
+  pauseBtn.classList.add('paused');
+  recordLabel.textContent = 'Pause – tippe ▶ oder Mikrofon';
+  setStatus('Pausiert – denk nach…');
+}
+
+function resumeRecording() {
+  isPaused = false;
+  pauseBtn.classList.remove('paused');
+  const rec = new SpeechRecognition();
+  rec.lang = 'de-DE';
+  rec.continuous = true;
+  rec.interimResults = true;
+  rec.maxAlternatives = 1;
+
+  rec.onresult = handleResult;
+  rec.onerror = handleError;
+  rec.onend = () => {
+    if (isPaused) return;
+    if (isRecording) {
+      finishAndProcess();
+    }
+  };
+
+  recognition = rec;
+  rec.start();
+  recordLabel.textContent = 'Aufnahme läuft…';
+  setStatus('Sprich weiter…');
+  resetSilenceTimer();
+}
+
+function handleResult(e) {
+  resetSilenceTimer();
+  let interim = '';
+  for (let i = e.resultIndex; i < e.results.length; i++) {
+    if (e.results[i].isFinal) {
+      finalTranscript += e.results[i][0].transcript + ' ';
+    } else {
+      interim += e.results[i][0].transcript;
+    }
+  }
+  const display = (finalTranscript + interim).trim();
+  if (display) {
+    outputEl.textContent = display;
+    outputEl.classList.remove('empty');
+    recordLabel.textContent = 'Aufnahme läuft…';
+    setStatus(interim ? '…' : '');
+  }
+}
+
+function handleError(e) {
+  const msgs = {
+    'not-allowed': 'Mikrofon nicht erlaubt.',
+    'no-speech': 'Kein Sprachsignal.',
+    'network': 'Netzwerkfehler.',
+    'audio-capture': 'Kein Mikrofon.',
+    'aborted': ''
+  };
+  const msg = msgs[e.error];
+  if (msg) setStatus(msg, true);
+}
+
+function finishAndProcess() {
+  setRecordingUI(false);
+  clearTimeout(silenceTimer);
+  const text = finalTranscript.trim();
+  if (!text) { setStatus('Kein Text erkannt.', true); return; }
+  if (currentMode !== 'normal') {
+    processWithClaude(text);
+  } else {
+    setOutput(text);
+    setStatus('');
+  }
+}
+
 function startRecording() {
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  finalTranscript = '';
+  isPaused = false;
   recognition = new SpeechRecognition();
   recognition.lang = 'de-DE';
-  recognition.continuous = !isSafari;
-  recognition.interimResults = !isSafari;
+  recognition.continuous = true;
+  recognition.interimResults = true;
   recognition.maxAlternatives = 1;
-
-  let finalTranscript = '';
 
   recognition.onstart = () => {
     setRecordingUI(true);
-    setStatus(isSafari ? 'Sprich jetzt – Stopp tippen wenn fertig' : 'Sprich jetzt…');
-    finalTranscript = '';
+    recordLabel.textContent = 'Aufnahme läuft…';
+    setStatus('Sprich jetzt – Stopp ■ oder Pause ⏸ tippen');
   };
 
-  recognition.onresult = (e) => {
-    let interim = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) {
-        finalTranscript += e.results[i][0].transcript + ' ';
-      } else {
-        interim += e.results[i][0].transcript;
-      }
-    }
-    const display = (finalTranscript + interim).trim();
-    if (display) {
-      outputEl.textContent = display;
-      outputEl.classList.remove('empty');
-      setStatus(interim ? '…' : '');
-    }
-  };
-
-  recognition.onspeechend = () => { if (isSafari) recognition.stop(); };
-
-  recognition.onerror = (e) => {
-    const msgs = {
-      'not-allowed': 'Mikrofon nicht erlaubt – Einstellungen → Safari → Mikrofon → erlauben.',
-      'no-speech': 'Kein Sprachsignal – bitte lauter sprechen.',
-      'network': 'Netzwerkfehler – Internet-Verbindung prüfen.',
-      'audio-capture': 'Kein Mikrofon gefunden.',
-    };
-    setStatus(msgs[e.error] || 'Fehler: ' + e.error, true);
-  };
+  recognition.onresult = handleResult;
+  recognition.onerror = handleError;
 
   recognition.onend = () => {
-    setRecordingUI(false);
-    const text = finalTranscript.trim();
-    if (!text) { setStatus('Kein Text erkannt – nochmal versuchen.', true); return; }
-    if (currentMode !== 'normal') {
-      processWithClaude(text);
-    } else {
-      setOutput(text);
-      setStatus('');
+    if (isPaused) return;
+    if (isRecording) {
+      finishAndProcess();
     }
   };
 
   recognition.start();
+  resetSilenceTimer();
 }
 
 async function processWithClaude(text) {
