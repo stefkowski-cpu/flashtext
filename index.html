@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Blitztext">
+<meta name="theme-color" content="#0f0f0f">
+<title>Blitztext</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: #2e2e2e;
+    --accent: #1D9E75;
+    --accent-dim: #0f3d2e;
+    --rage: #c94a2a;
+    --rage-dim: #3d1a0e;
+    --text: #f0f0f0;
+    --text-dim: #888;
+    --text-hint: #444;
+    --radius: 14px;
+    --radius-sm: 9px;
+  }
+  html, body {
+    height: 100%; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased; overflow-x: hidden;
+  }
+  body { display: flex; flex-direction: column; min-height: 100vh; }
+
+  .app { flex: 1; display: flex; flex-direction: column; max-width: 520px; margin: 0 auto; width: 100%; padding: env(safe-area-inset-top, 16px) 16px env(safe-area-inset-bottom, 24px); }
+
+  /* Header */
+  .header { display: flex; align-items: center; justify-content: space-between; padding: 12px 0 20px; }
+  .logo { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .settings-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; }
+
+  /* Mode grid */
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .mode-btn {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 12px; cursor: pointer;
+    text-align: left; transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+  }
+  .mode-btn:active { transform: scale(0.97); }
+  .mode-btn.active { border-color: var(--accent); background: var(--accent-dim); }
+  .mode-btn.active.rage-mode { border-color: var(--rage); background: var(--rage-dim); }
+  .mode-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .mode-desc { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+
+  /* Emoji slider */
+  .emoji-slider-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 16px; display: none; }
+  .emoji-slider-wrap.visible { display: block; }
+  .slider-header { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-dim); margin-bottom: 10px; }
+  .slider-header strong { color: var(--text); }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+
+  /* Record area */
+  .record-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; margin: 20px 0; }
+  .record-btn {
+    width: 88px; height: 88px; border-radius: 50%;
+    border: 1.5px solid var(--border); background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+    position: relative;
+  }
+  .record-btn:active { transform: scale(0.95); }
+  .record-btn.recording {
+    border-color: var(--rage); background: var(--rage-dim);
+    box-shadow: 0 0 0 6px rgba(201,74,42,0.15);
+    animation: pulse-ring 1.5s ease-out infinite;
+  }
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 rgba(201,74,42,0.3); }
+    70% { box-shadow: 0 0 0 12px rgba(201,74,42,0); }
+    100% { box-shadow: 0 0 0 0 rgba(201,74,42,0); }
+  }
+  .record-btn svg { transition: all 0.15s; }
+  .record-label { font-size: 13px; color: var(--text-dim); text-align: center; }
+  .record-label.active { color: var(--rage); }
+
+  /* Processing dots */
+  .dots-wrap { display: none; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .dots-wrap.visible { display: flex; }
+  .dots-wrap span { font-size: 13px; color: var(--text-dim); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: dotbounce 1.2s infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes dotbounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+
+  /* Output */
+  .output-box {
+    flex: 1; min-height: 120px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px; font-size: 16px; line-height: 1.65;
+    color: var(--text); white-space: pre-wrap; word-break: break-word;
+    margin-bottom: 12px; cursor: text;
+  }
+  .output-box.empty { color: var(--text-hint); font-style: italic; }
+
+  /* Actions */
+  .actions { display: flex; gap: 8px; margin-bottom: 8px; }
+  .action-btn {
+    flex: 1; padding: 13px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+  }
+  .action-btn:active { transform: scale(0.97); background: var(--surface2); }
+  .action-btn:disabled { opacity: 0.35; cursor: default; }
+  .action-btn.primary { background: var(--accent-dim); border-color: var(--accent); color: #5DCAA5; }
+  .action-btn.primary:active { background: #0a2e20; }
+
+  /* Status */
+  .status { font-size: 12px; color: var(--text-dim); text-align: center; min-height: 18px; }
+  .status.error { color: #e05a3a; }
+
+  /* Settings panel */
+  .settings-panel {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    display: none; align-items: flex-end; z-index: 100;
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  }
+  .settings-panel.open { display: flex; }
+  .settings-sheet {
+    background: var(--surface); border-radius: 20px 20px 0 0;
+    padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+    width: 100%; border-top: 1px solid var(--border);
+  }
+  .settings-sheet h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+  .settings-sheet label { font-size: 13px; color: var(--text-dim); display: block; margin-bottom: 6px; }
+  .settings-sheet input[type=text], .settings-sheet input[type=password] {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px 12px;
+    font-size: 14px; color: var(--text); font-family: inherit; margin-bottom: 14px;
+  }
+  .settings-sheet input:focus { outline: none; border-color: var(--accent); }
+  .save-btn {
+    width: 100%; padding: 13px; background: var(--accent); border: none;
+    border-radius: var(--radius-sm); color: #fff; font-size: 15px; font-weight: 600;
+    cursor: pointer; margin-bottom: 10px;
+  }
+  .close-btn {
+    width: 100%; padding: 12px; background: transparent; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text-dim); font-size: 14px; cursor: pointer;
+  }
+  .key-hint { font-size: 11px; color: var(--text-hint); margin-top: -10px; margin-bottom: 14px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="logo">Blitz<span>text</span></div>
+    <button class="settings-btn" id="settingsToggle" title="Einstellungen">⚙</button>
+  </div>
+
+  <div class="modes">
+    <button class="mode-btn active" data-mode="normal">
+      <div class="mode-name">Normal</div>
+      <div class="mode-desc">Exakt wie gesprochen</div>
+    </button>
+    <button class="mode-btn" data-mode="plus">
+      <div class="mode-name">Blitztext Plus</div>
+      <div class="mode-desc">Schriftlicher formuliert</div>
+    </button>
+    <button class="mode-btn rage-mode" data-mode="rage">
+      <div class="mode-name">Rage Mode</div>
+      <div class="mode-desc">Wut → freundlich</div>
+    </button>
+    <button class="mode-btn" data-mode="emoji">
+      <div class="mode-name">Emoji Mode</div>
+      <div class="mode-desc">Mit Emojis anreichern</div>
+    </button>
+  </div>
+
+  <div class="emoji-slider-wrap" id="emojiSlider">
+    <div class="slider-header">Emoji-Dichte <strong id="emojiLabel">mittel</strong></div>
+    <input type="range" id="emojiRange" min="1" max="3" step="1" value="2">
+  </div>
+
+  <div class="record-wrap">
+    <button class="record-btn" id="recordBtn">
+      <svg id="micIcon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="2" width="6" height="12" rx="3"/>
+        <path d="M5 10a7 7 0 0 0 14 0"/>
+        <line x1="12" y1="17" x2="12" y2="22"/>
+        <line x1="8" y1="22" x2="16" y2="22"/>
+      </svg>
+    </button>
+    <div class="record-label" id="recordLabel">Tippen zum Starten</div>
+  </div>
+
+  <div class="dots-wrap" id="dotsWrap">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    <span>Wird verarbeitet…</span>
+  </div>
+
+  <div class="output-box empty" id="output">Hier erscheint dein Text…</div>
+
+  <div class="actions">
+    <button class="action-btn primary" id="copyBtn" disabled>Kopieren</button>
+    <button class="action-btn" id="clearBtn">Löschen</button>
+  </div>
+
+  <div class="status" id="status"></div>
+</div>
+
+<!-- Settings Panel -->
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-sheet">
+    <h3>Einstellungen</h3>
+    <label>Anthropic API Key (für Plus, Rage, Emoji)</label>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
+    <p class="key-hint">Kostenlos unter console.anthropic.com — wird nur lokal gespeichert</p>
+    <button class="save-btn" id="saveSettings">Speichern</button>
+    <button class="close-btn" id="closeSettings">Schließen</button>
+  </div>
+</div>
+
+<script>
+const EMOJI_LABELS = { 1: 'wenig', 2: 'mittel', 3: 'viel' };
+const EMOJI_COUNTS = { 1: '1-2', 2: '3-5', 3: '6-8' };
+
+let currentMode = 'normal';
+let emojiLevel = 2;
+let isRecording = false;
+let recognition = null;
+let outputText = '';
+
+const recordBtn = document.getElementById('recordBtn');
+const recordLabel = document.getElementById('recordLabel');
+const micIcon = document.getElementById('micIcon');
+const outputEl = document.getElementById('output');
+const copyBtn = document.getElementById('copyBtn');
+const clearBtn = document.getElementById('clearBtn');
+const statusEl = document.getElementById('status');
+const dotsWrap = document.getElementById('dotsWrap');
+const emojiSlider = document.getElementById('emojiSlider');
+const emojiRange = document.getElementById('emojiRange');
+const emojiLabel = document.getElementById('emojiLabel');
+
+emojiRange.oninput = () => {
+  emojiLevel = +emojiRange.value;
+  emojiLabel.textContent = EMOJI_LABELS[emojiLevel];
+};
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMode = btn.dataset.mode;
+    emojiSlider.classList.toggle('visible', currentMode === 'emoji');
+  };
+});
+
+// Settings
+document.getElementById('settingsToggle').onclick = () => {
+  document.getElementById('settingsPanel').classList.add('open');
+  document.getElementById('apiKeyInput').value = localStorage.getItem('bt_key') || '';
+};
+document.getElementById('closeSettings').onclick = () => document.getElementById('settingsPanel').classList.remove('open');
+document.getElementById('settingsPanel').onclick = (e) => { if (e.target === document.getElementById('settingsPanel')) document.getElementById('settingsPanel').classList.remove('open'); };
+document.getElementById('saveSettings').onclick = () => {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (key) localStorage.setItem('bt_key', key);
+  else localStorage.removeItem('bt_key');
+  document.getElementById('settingsPanel').classList.remove('open');
+  setStatus('Gespeichert.');
+};
+
+function setStatus(msg, err = false) {
+  statusEl.textContent = msg;
+  statusEl.className = 'status' + (err ? ' error' : '');
+}
+
+function setOutput(text) {
+  outputText = text;
+  outputEl.textContent = text;
+  outputEl.classList.remove('empty');
+  copyBtn.disabled = false;
+}
+
+function setRecordingUI(active) {
+  isRecording = active;
+  recordBtn.classList.toggle('recording', active);
+  recordLabel.textContent = active ? 'Tippen zum Stoppen' : 'Tippen zum Starten';
+  recordLabel.classList.toggle('active', active);
+  micIcon.setAttribute('stroke', active ? '#e05a3a' : '#f0f0f0');
+}
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+recordBtn.onclick = () => {
+  if (!SpeechRecognition) {
+    setStatus('Spracherkennung nicht verfügbar. Bitte Safari 14.5+ oder Chrome verwenden.', true);
+    return;
+  }
+  if (isRecording) { recognition && recognition.stop(); return; }
+  startRecording();
+};
+
+function startRecording() {
+  recognition = new SpeechRecognition();
+  recognition.lang = 'de-DE';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => { setRecordingUI(true); setStatus(''); };
+
+  recognition.onresult = (e) => {
+    const text = e.results[0][0].transcript;
+    if (currentMode === 'normal') {
+      setOutput(text);
+    } else {
+      processWithClaude(text);
+    }
+  };
+
+  recognition.onerror = (e) => {
+    setStatus('Fehler: ' + e.error + (e.error === 'not-allowed' ? ' – Bitte Mikrofon erlauben.' : ''), true);
+  };
+
+  recognition.onend = () => setRecordingUI(false);
+  recognition.start();
+}
+
+async function processWithClaude(text) {
+  const key = localStorage.getItem('bt_key');
+  if (!key) {
+    setOutput(text);
+    setStatus('Kein API Key hinterlegt – Normal-Modus verwendet. Key im ⚙ eintragen.', true);
+    return;
+  }
+
+  dotsWrap.classList.add('visible');
+  setStatus('');
+
+  const prompts = {
+    plus: `Du erhältst gesprochenen Text. Formuliere ihn schriftlicher und klarer, behalte Sinn und Kernaussage exakt. Gib nur den umformulierten Text aus, keine Erklärungen.\n\nText: ${text}`,
+    rage: `Du erhältst wütenden oder frustrierten Text. Formuliere ihn höflich und professionell um, behalte die Kernaussage. Gib nur den umformulierten Text aus, keine Erklärungen.\n\nText: ${text}`,
+    emoji: `Du erhältst einen Text. Füge ${EMOJI_COUNTS[emojiLevel]} passende Emojis ein (Dichte: ${EMOJI_LABELS[emojiLevel]}). Platziere sie natürlich im Text. Gib nur den Text mit Emojis aus, keine Erklärungen.\n\nText: ${text}`
+  };
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompts[currentMode] }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    setOutput(data.content?.[0]?.text || text);
+  } catch (err) {
+    setOutput(text);
+    setStatus('Verarbeitung fehlgeschlagen: ' + err.message, true);
+  } finally {
+    dotsWrap.classList.remove('visible');
+  }
+}
+
+copyBtn.onclick = () => {
+  if (!outputText) return;
+  navigator.clipboard.writeText(outputText).then(() => {
+    const old = copyBtn.textContent;
+    copyBtn.textContent = 'Kopiert ✓';
+    setTimeout(() => { copyBtn.textContent = old; }, 1500);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = outputText;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    copyBtn.textContent = 'Kopiert ✓';
+    setTimeout(() => { copyBtn.textContent = 'Kopieren'; }, 1500);
+  });
+};
+
+clearBtn.onclick = () => {
+  outputText = '';
+  outputEl.textContent = 'Hier erscheint dein Text…';
+  outputEl.classList.add('empty');
+  copyBtn.disabled = true;
+  setStatus('');
+};
+</script>
+</body>
+</html>
