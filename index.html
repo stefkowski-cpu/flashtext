@@ -5,557 +5,337 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Blitztext">
+<meta name="apple-mobile-web-app-title" content="Flashtext">
 <meta name="theme-color" content="#0f0f0f">
-<title>Blitztext</title>
+<title>Flashtext</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #0f0f0f;
-    --surface: #1a1a1a;
-    --surface2: #242424;
-    --border: #2e2e2e;
-    --accent: #1D9E75;
-    --accent-dim: #0f3d2e;
-    --rage: #c94a2a;
-    --rage-dim: #3d1a0e;
-    --text: #f0f0f0;
-    --text-dim: #888;
-    --text-hint: #444;
-    --radius: 14px;
-    --radius-sm: 9px;
+    --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #242424;
+    --border: #2e2e2e; --accent: #1D9E75; --accent-dim: #0f3d2e;
+    --rage: #c94a2a; --rage-dim: #3d1a0e;
+    --suno: #7F77DD; --suno-dim: #1e1b3a;
+    --text: #f0f0f0; --text-dim: #888; --text-hint: #444;
+    --radius: 14px; --radius-sm: 9px;
   }
-  html, body {
-    height: 100%; background: var(--bg); color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
-    -webkit-font-smoothing: antialiased; overflow-x: hidden;
-  }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
   body { display: flex; flex-direction: column; min-height: 100vh; }
-
   .app { flex: 1; display: flex; flex-direction: column; max-width: 520px; margin: 0 auto; width: 100%; padding: env(safe-area-inset-top, 16px) 16px env(safe-area-inset-bottom, 24px); }
-
-  /* Header */
   .header { display: flex; align-items: center; justify-content: space-between; padding: 12px 0 20px; }
   .logo { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
   .logo span { color: var(--accent); }
   .settings-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; }
-
-  /* Mode grid */
   .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-  .mode-btn {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); padding: 12px; cursor: pointer;
-    text-align: left; transition: all 0.15s; -webkit-tap-highlight-color: transparent;
-  }
+  .mode-btn { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; cursor: pointer; text-align: left; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
   .mode-btn:active { transform: scale(0.97); }
   .mode-btn.active { border-color: var(--accent); background: var(--accent-dim); }
   .mode-btn.active.rage-mode { border-color: var(--rage); background: var(--rage-dim); }
+  .mode-btn.active.suno-mode { border-color: var(--suno); background: var(--suno-dim); }
   .mode-name { font-size: 13px; font-weight: 600; color: var(--text); }
   .mode-desc { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
-
-  /* Emoji slider */
   .emoji-slider-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 16px; display: none; }
   .emoji-slider-wrap.visible { display: block; }
   .slider-header { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-dim); margin-bottom: 10px; }
   .slider-header strong { color: var(--text); }
   input[type=range] { width: 100%; accent-color: var(--accent); }
-
-  /* Record area */
   .record-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; margin: 20px 0; }
-  .record-btn {
-    width: 88px; height: 88px; border-radius: 50%;
-    border: 1.5px solid var(--border); background: var(--surface2);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent;
-    position: relative;
-  }
+  .record-btn { width: 88px; height: 88px; border-radius: 50%; border: 1.5px solid var(--border); background: var(--surface2); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
   .record-btn:active { transform: scale(0.95); }
-  .record-btn.recording {
-    border-color: var(--rage); background: var(--rage-dim);
-    box-shadow: 0 0 0 6px rgba(201,74,42,0.15);
-    animation: pulse-ring 1.5s ease-out infinite;
-  }
-  @keyframes pulse-ring {
-    0% { box-shadow: 0 0 0 0 rgba(201,74,42,0.3); }
-    70% { box-shadow: 0 0 0 12px rgba(201,74,42,0); }
-    100% { box-shadow: 0 0 0 0 rgba(201,74,42,0); }
-  }
-  .record-btn svg { transition: all 0.15s; }
+  .record-btn.recording { border-color: var(--rage); background: var(--rage-dim); box-shadow: 0 0 0 6px rgba(201,74,42,0.15); animation: pulse-ring 1.5s ease-out infinite; }
+  @keyframes pulse-ring { 0%{box-shadow:0 0 0 0 rgba(201,74,42,0.3)} 70%{box-shadow:0 0 0 12px rgba(201,74,42,0)} 100%{box-shadow:0 0 0 0 rgba(201,74,42,0)} }
   .record-label { font-size: 13px; color: var(--text-dim); text-align: center; }
   .record-label.active { color: var(--rage); }
-
-  /* Processing dots */
+  .sub-buttons { display: none; gap: 12px; justify-content: center; }
+  .sub-buttons.visible { display: flex; }
+  .sub-btn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface2); color: var(--text-dim); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+  .sub-btn:active { transform: scale(0.92); }
+  .pause-btn.paused { background: var(--accent-dim); border-color: var(--accent); color: #5DCAA5; }
+  .stop-btn { color: #e05a3a; border-color: #5a2010; }
   .dots-wrap { display: none; align-items: center; gap: 8px; margin-bottom: 10px; }
   .dots-wrap.visible { display: flex; }
   .dots-wrap span { font-size: 13px; color: var(--text-dim); }
   .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: dotbounce 1.2s infinite; }
-  .dot:nth-child(2) { animation-delay: 0.2s; }
-  .dot:nth-child(3) { animation-delay: 0.4s; }
+  .dot:nth-child(2){animation-delay:.2s} .dot:nth-child(3){animation-delay:.4s}
   @keyframes dotbounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
-
-  /* Output */
-  .output-box {
-    flex: 1; min-height: 120px; background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 14px; font-size: 16px; line-height: 1.65;
-    color: var(--text); white-space: pre-wrap; word-break: break-word;
-    margin-bottom: 12px; cursor: text;
-  }
+  .output-box { flex: 1; min-height: 100px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; font-size: 16px; line-height: 1.65; color: var(--text); white-space: pre-wrap; word-break: break-word; margin-bottom: 12px; }
   .output-box.empty { color: var(--text-hint); font-style: italic; }
-
-  /* Actions */
   .actions { display: flex; gap: 8px; margin-bottom: 8px; }
-  .action-btn {
-    flex: 1; padding: 13px; border-radius: var(--radius-sm);
-    border: 1px solid var(--border); background: var(--surface);
-    color: var(--text); font-size: 14px; font-weight: 500;
-    cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent;
-  }
+  .action-btn { flex: 1; padding: 13px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
   .action-btn:active { transform: scale(0.97); background: var(--surface2); }
   .action-btn:disabled { opacity: 0.35; cursor: default; }
   .action-btn.primary { background: var(--accent-dim); border-color: var(--accent); color: #5DCAA5; }
-  .action-btn.primary:active { background: #0a2e20; }
-
-  /* Status */
   .status { font-size: 12px; color: var(--text-dim); text-align: center; min-height: 18px; }
   .status.error { color: #e05a3a; }
-
-  /* Settings panel */
-  .settings-panel {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
-    display: none; align-items: flex-end; z-index: 100;
-    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
-  }
+  .suno-stepper { display: none; margin-bottom: 12px; }
+  .suno-stepper.visible { display: block; }
+  .suno-step-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .suno-step-title { font-size: 15px; font-weight: 600; color: var(--suno); }
+  .suno-step-counter { font-size: 12px; color: var(--text-dim); background: var(--surface2); padding: 4px 10px; border-radius: 20px; }
+  .suno-step-dots { display: flex; gap: 6px; justify-content: center; margin-bottom: 12px; }
+  .suno-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: background 0.2s; }
+  .suno-dot.active { background: var(--suno); }
+  .suno-dot.done { background: var(--accent); }
+  .suno-content { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; font-size: 14px; font-family: 'SF Mono', Menlo, Consolas, monospace; line-height: 1.6; color: var(--text); white-space: pre-wrap; word-break: break-word; max-height: 300px; overflow-y: auto; margin-bottom: 12px; }
+  .suno-charcount { font-size: 11px; text-align: right; margin-top: -8px; margin-bottom: 10px; }
+  .suno-actions { display: flex; gap: 8px; }
+  .suno-copy-btn { flex: 1; padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--suno); background: var(--suno-dim); color: #AFA9EC; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .suno-copy-btn:active { transform: scale(0.97); }
+  .suno-back-btn { padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text-dim); font-size: 14px; cursor: pointer; }
+  .suno-reset-btn { width: 100%; padding: 10px; margin-top: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: transparent; color: var(--text-dim); font-size: 13px; cursor: pointer; }
+  .settings-panel { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: flex-end; z-index: 100; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
   .settings-panel.open { display: flex; }
-  .settings-sheet {
-    background: var(--surface); border-radius: 20px 20px 0 0;
-    padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
-    width: 100%; border-top: 1px solid var(--border);
-  }
+  .settings-sheet { background: var(--surface); border-radius: 20px 20px 0 0; padding: 20px 20px calc(20px + env(safe-area-inset-bottom)); width: 100%; border-top: 1px solid var(--border); }
   .settings-sheet h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
   .settings-sheet label { font-size: 13px; color: var(--text-dim); display: block; margin-bottom: 6px; }
-  .settings-sheet input[type=text], .settings-sheet input[type=password] {
-    width: 100%; background: var(--surface2); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); padding: 10px 12px;
-    font-size: 14px; color: var(--text); font-family: inherit; margin-bottom: 14px;
-  }
+  .settings-sheet input[type=text], .settings-sheet input[type=password] { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 14px; color: var(--text); font-family: inherit; margin-bottom: 14px; }
   .settings-sheet input:focus { outline: none; border-color: var(--accent); }
-  .save-btn {
-    width: 100%; padding: 13px; background: var(--accent); border: none;
-    border-radius: var(--radius-sm); color: #fff; font-size: 15px; font-weight: 600;
-    cursor: pointer; margin-bottom: 10px;
-  }
-  .close-btn {
-    width: 100%; padding: 12px; background: transparent; border: 1px solid var(--border);
-    border-radius: var(--radius-sm); color: var(--text-dim); font-size: 14px; cursor: pointer;
-  }
+  .save-btn { width: 100%; padding: 13px; background: var(--accent); border: none; border-radius: var(--radius-sm); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 10px; }
+  .close-btn { width: 100%; padding: 12px; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-dim); font-size: 14px; cursor: pointer; }
   .key-hint { font-size: 11px; color: var(--text-hint); margin-top: -10px; margin-bottom: 14px; }
-
-  .sub-buttons { display: none; gap: 12px; justify-content: center; }
-  .sub-buttons.visible { display: flex; }
-  .sub-btn {
-    width: 44px; height: 44px; border-radius: 50%;
-    border: 1px solid var(--border); background: var(--surface2);
-    color: var(--text-dim); display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent;
-  }
-  .sub-btn:active { transform: scale(0.92); }
-  .pause-btn.paused { background: var(--accent-dim); border-color: var(--accent); color: #5DCAA5; }
-  .stop-btn { color: #e05a3a; border-color: #5a2010; }
-  .stop-btn:active { background: var(--rage-dim); }
-  .timer-bar { width: 100%; max-width: 200px; height: 3px; background: var(--surface2); border-radius: 2px; overflow: hidden; display: none; }
-  .timer-bar.visible { display: block; }
-  .timer-fill { height: 100%; background: var(--accent); width: 100%; transition: width linear; }
 </style>
 </head>
 <body>
 <div class="app">
   <div class="header">
-    <div class="logo">Blitz<span>text</span></div>
-    <button class="settings-btn" id="settingsToggle" title="Einstellungen">⚙</button>
+    <div class="logo">Flash<span>text</span></div>
+    <button class="settings-btn" id="settingsToggle">&#9881;</button>
   </div>
-
   <div class="modes">
-    <button class="mode-btn active" data-mode="normal">
-      <div class="mode-name">Normal</div>
-      <div class="mode-desc">Exakt wie gesprochen</div>
-    </button>
-    <button class="mode-btn" data-mode="plus">
-      <div class="mode-name">Blitztext Plus</div>
-      <div class="mode-desc">Schriftlicher formuliert</div>
-    </button>
-    <button class="mode-btn rage-mode" data-mode="rage">
-      <div class="mode-name">Rage Mode</div>
-      <div class="mode-desc">Wut → freundlich</div>
-    </button>
-    <button class="mode-btn" data-mode="emoji">
-      <div class="mode-name">Emoji Mode</div>
-      <div class="mode-desc">Mit Emojis anreichern</div>
-    </button>
-    <button class="mode-btn" data-mode="bullet">
-      <div class="mode-name">Bullet-Modus</div>
-      <div class="mode-desc">Stichpunkte &amp; Struktur</div>
-    </button>
-    <button class="mode-btn" data-mode="berlin">
-      <div class="mode-name">Berlinerisch</div>
-      <div class="mode-desc">Allet uff Berlinerisch</div>
-    </button>
-    <button class="mode-btn" data-mode="prompt">
-      <div class="mode-name">Claude Prompt</div>
-      <div class="mode-desc">Optimiert für KI</div>
-    </button>
+    <button class="mode-btn active" data-mode="normal"><div class="mode-name">Normal</div><div class="mode-desc">Exakt wie gesprochen</div></button>
+    <button class="mode-btn" data-mode="plus"><div class="mode-name">Flashtext Plus</div><div class="mode-desc">Schriftlicher formuliert</div></button>
+    <button class="mode-btn rage-mode" data-mode="rage"><div class="mode-name">Rage Mode</div><div class="mode-desc">Wut &#8594; freundlich</div></button>
+    <button class="mode-btn" data-mode="emoji"><div class="mode-name">Emoji Mode</div><div class="mode-desc">Mit Emojis anreichern</div></button>
+    <button class="mode-btn" data-mode="bullet"><div class="mode-name">Bullet-Modus</div><div class="mode-desc">Stichpunkte &amp; Struktur</div></button>
+    <button class="mode-btn" data-mode="berlin"><div class="mode-name">Berlinerisch</div><div class="mode-desc">Allet uff Berlinerisch</div></button>
+    <button class="mode-btn" data-mode="prompt"><div class="mode-name">Claude Prompt</div><div class="mode-desc">Optimiert f&#252;r KI</div></button>
+    <button class="mode-btn suno-mode" data-mode="suno"><div class="mode-name">Suno</div><div class="mode-desc">Song-Prompt Generator</div></button>
   </div>
-
   <div class="emoji-slider-wrap" id="emojiSlider">
     <div class="slider-header">Emoji-Dichte <strong id="emojiLabel">mittel</strong></div>
     <input type="range" id="emojiRange" min="1" max="3" step="1" value="2">
   </div>
-
   <div class="record-wrap">
     <button class="record-btn" id="recordBtn">
       <svg id="micIcon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="9" y="2" width="6" height="12" rx="3"/>
-        <path d="M5 10a7 7 0 0 0 14 0"/>
-        <line x1="12" y1="17" x2="12" y2="22"/>
-        <line x1="8" y1="22" x2="16" y2="22"/>
+        <rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/>
       </svg>
     </button>
     <div class="sub-buttons" id="subButtons">
-      <button class="sub-btn pause-btn" id="pauseBtn" title="Pause">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
-      </button>
-      <button class="sub-btn stop-btn" id="stopBtn" title="Fertig">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-      </button>
+      <button class="sub-btn pause-btn" id="pauseBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg></button>
+      <button class="sub-btn stop-btn" id="stopBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
     </div>
     <div class="record-label" id="recordLabel">Tippen zum Starten</div>
   </div>
-
   <div class="dots-wrap" id="dotsWrap">
     <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-    <span>Wird verarbeitet…</span>
+    <span id="dotsLabel">Wird verarbeitet&#8230;</span>
   </div>
-
-  <div class="output-box empty" id="output">Hier erscheint dein Text…</div>
-
-  <div class="actions">
-    <button class="action-btn primary" id="copyBtn" disabled>Kopieren</button>
-    <button class="action-btn" id="clearBtn">Löschen</button>
+  <div id="normalOutput">
+    <div class="output-box empty" id="output">Hier erscheint dein Text&#8230;</div>
+    <div class="actions">
+      <button class="action-btn primary" id="copyBtn" disabled>Kopieren</button>
+      <button class="action-btn" id="clearBtn">L&#246;schen</button>
+    </div>
   </div>
-
+  <div class="suno-stepper" id="sunoStepper">
+    <div class="suno-step-dots"><div class="suno-dot" id="sunoDot0"></div><div class="suno-dot" id="sunoDot1"></div><div class="suno-dot" id="sunoDot2"></div></div>
+    <div class="suno-step-header">
+      <div class="suno-step-title" id="sunoStepTitle">Songprompt</div>
+      <div class="suno-step-counter" id="sunoStepCounter">1 / 3</div>
+    </div>
+    <div class="suno-content" id="sunoContent"></div>
+    <div class="suno-charcount" id="sunoCharcount"></div>
+    <div class="suno-actions">
+      <button class="suno-back-btn" id="sunoBackBtn">&#8592;</button>
+      <button class="suno-copy-btn" id="sunoCopyBtn">Kopieren &amp; Weiter &#8594;</button>
+    </div>
+    <button class="suno-reset-btn" id="sunoResetBtn">Neuer Song</button>
+  </div>
   <div class="status" id="status"></div>
 </div>
-
-<!-- Settings Panel -->
 <div class="settings-panel" id="settingsPanel">
   <div class="settings-sheet">
     <h3>Einstellungen</h3>
-    <label>Anthropic API Key (für Plus, Rage, Emoji)</label>
+    <label>Anthropic API Key</label>
     <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
-    <p class="key-hint">Kostenlos unter console.anthropic.com — wird nur lokal gespeichert</p>
+    <p class="key-hint">console.anthropic.com &#8212; wird nur lokal gespeichert</p>
     <button class="save-btn" id="saveSettings">Speichern</button>
-    <button class="close-btn" id="closeSettings">Schließen</button>
+    <button class="close-btn" id="closeSettings">Schlie&#223;en</button>
   </div>
 </div>
-
 <script>
-const EMOJI_LABELS = { 1: 'wenig', 2: 'mittel', 3: 'viel' };
-const EMOJI_COUNTS = { 1: '1-2', 2: '3-5', 3: '6-8' };
+const EMOJI_LABELS={1:'wenig',2:'mittel',3:'viel'};
+const EMOJI_COUNTS={1:'1-2',2:'3-5',3:'6-8'};
+let currentMode='normal',emojiLevel=2,isRecording=false,isPaused=false,recognition=null,outputText='',finalTranscript='',silenceTimer=null;
+const SILENCE_TIMEOUT=12000;
+let sunoBlocks=[],sunoStep=0;
+const SUNO_TITLES=['Songprompt','Excluded Styles','Songtext'];
+const $=id=>document.getElementById(id);
+const recordBtn=$('recordBtn'),recordLabel=$('recordLabel'),micIcon=$('micIcon'),outputEl=$('output'),copyBtn=$('copyBtn'),clearBtn=$('clearBtn'),statusEl=$('status'),dotsWrap=$('dotsWrap'),dotsLabel=$('dotsLabel'),emojiSliderEl=$('emojiSlider'),emojiRange=$('emojiRange'),emojiLabelEl=$('emojiLabel'),subButtons=$('subButtons'),pauseBtn=$('pauseBtn'),stopBtnEl=$('stopBtn'),normalOutput=$('normalOutput'),sunoStepper=$('sunoStepper'),sunoContent=$('sunoContent'),sunoStepTitle=$('sunoStepTitle'),sunoStepCounter=$('sunoStepCounter'),sunoCharcount=$('sunoCharcount'),sunoCopyBtn=$('sunoCopyBtn'),sunoBackBtn=$('sunoBackBtn'),sunoResetBtn=$('sunoResetBtn');
 
-let currentMode = 'normal';
-let emojiLevel = 2;
-let isRecording = false;
-let recognition = null;
-let outputText = '';
+emojiRange.oninput=()=>{emojiLevel=+emojiRange.value;emojiLabelEl.textContent=EMOJI_LABELS[emojiLevel];};
 
-const recordBtn = document.getElementById('recordBtn');
-const recordLabel = document.getElementById('recordLabel');
-const micIcon = document.getElementById('micIcon');
-const outputEl = document.getElementById('output');
-const copyBtn = document.getElementById('copyBtn');
-const clearBtn = document.getElementById('clearBtn');
-const statusEl = document.getElementById('status');
-const dotsWrap = document.getElementById('dotsWrap');
-const emojiSlider = document.getElementById('emojiSlider');
-const emojiRange = document.getElementById('emojiRange');
-const emojiLabel = document.getElementById('emojiLabel');
-
-emojiRange.oninput = () => {
-  emojiLevel = +emojiRange.value;
-  emojiLabel.textContent = EMOJI_LABELS[emojiLevel];
-};
-
-document.querySelectorAll('.mode-btn').forEach(btn => {
-  btn.onclick = () => {
-    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+document.querySelectorAll('.mode-btn').forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    currentMode = btn.dataset.mode;
-    emojiSlider.classList.toggle('visible', currentMode === 'emoji');
+    currentMode=btn.dataset.mode;
+    emojiSliderEl.classList.toggle('visible',currentMode==='emoji');
+    if(currentMode!=='suno'){sunoStepper.classList.remove('visible');normalOutput.style.display='';}
   };
 });
 
-// Settings
-document.getElementById('settingsToggle').onclick = () => {
-  document.getElementById('settingsPanel').classList.add('open');
-  document.getElementById('apiKeyInput').value = localStorage.getItem('bt_key') || '';
-};
-document.getElementById('closeSettings').onclick = () => document.getElementById('settingsPanel').classList.remove('open');
-document.getElementById('settingsPanel').onclick = (e) => { if (e.target === document.getElementById('settingsPanel')) document.getElementById('settingsPanel').classList.remove('open'); };
-document.getElementById('saveSettings').onclick = () => {
-  const key = document.getElementById('apiKeyInput').value.trim();
-  if (key) localStorage.setItem('bt_key', key);
-  else localStorage.removeItem('bt_key');
-  document.getElementById('settingsPanel').classList.remove('open');
-  setStatus('Gespeichert.');
-};
+$('settingsToggle').onclick=()=>{$('settingsPanel').classList.add('open');$('apiKeyInput').value=localStorage.getItem('ft_key')||'';};
+$('closeSettings').onclick=()=>$('settingsPanel').classList.remove('open');
+$('settingsPanel').onclick=e=>{if(e.target===$('settingsPanel'))$('settingsPanel').classList.remove('open');};
+$('saveSettings').onclick=()=>{const k=$('apiKeyInput').value.trim();if(k)localStorage.setItem('ft_key',k);else localStorage.removeItem('ft_key');$('settingsPanel').classList.remove('open');setStatus('Gespeichert.');};
 
-function setStatus(msg, err = false) {
-  statusEl.textContent = msg;
-  statusEl.className = 'status' + (err ? ' error' : '');
+function setStatus(m,e=false){statusEl.textContent=m;statusEl.className='status'+(e?' error':'');}
+function setOutput(t){outputText=t;outputEl.textContent=t;outputEl.classList.remove('empty');copyBtn.disabled=false;}
+
+function setRecordingUI(a){
+  isRecording=a;recordBtn.classList.toggle('recording',a);subButtons.classList.toggle('visible',a);
+  micIcon.setAttribute('stroke',a?'#e05a3a':'#f0f0f0');
+  if(!a){isPaused=false;pauseBtn.classList.remove('paused');recordLabel.textContent='Tippen zum Starten';recordLabel.classList.remove('active');}
+  else recordLabel.classList.add('active');
 }
 
-function setOutput(text) {
-  outputText = text;
-  outputEl.textContent = text;
-  outputEl.classList.remove('empty');
-  copyBtn.disabled = false;
+function resetSilenceTimer(){clearTimeout(silenceTimer);if(isRecording&&!isPaused){silenceTimer=setTimeout(()=>{if(recognition&&isRecording&&!isPaused)finishRecording();},SILENCE_TIMEOUT);}}
+function finishRecording(){clearTimeout(silenceTimer);if(recognition)recognition.stop();}
+
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+recordBtn.onclick=()=>{if(!SR){setStatus('Spracherkennung nicht verf\u00fcgbar.',true);return;}if(isRecording&&!isPaused){finishRecording();return;}if(isRecording&&isPaused){resumeRecording();return;}startRecording();};
+stopBtnEl.onclick=()=>finishRecording();
+pauseBtn.onclick=()=>{if(isPaused)resumeRecording();else pauseRecording();};
+
+function pauseRecording(){isPaused=true;clearTimeout(silenceTimer);if(recognition)recognition.stop();pauseBtn.classList.add('paused');recordLabel.textContent='Pause \u2013 tippe \u25B6 oder Mikrofon';setStatus('Pausiert \u2013 denk nach\u2026');}
+
+function resumeRecording(){
+  isPaused=false;pauseBtn.classList.remove('paused');
+  const r=new SR();r.lang='de-DE';r.continuous=true;r.interimResults=true;r.maxAlternatives=1;
+  r.onresult=handleResult;r.onerror=handleError;r.onend=()=>{if(!isPaused&&isRecording)finishAndProcess();};
+  recognition=r;r.start();recordLabel.textContent='Aufnahme l\u00e4uft\u2026';setStatus('Sprich weiter\u2026');resetSilenceTimer();
 }
 
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-const subButtons = document.getElementById('subButtons');
-const pauseBtn = document.getElementById('pauseBtn');
-const stopBtn = document.getElementById('stopBtn');
-let finalTranscript = '';
-let isPaused = false;
-let silenceTimer = null;
-const SILENCE_TIMEOUT = 12000;
+function handleResult(e){
+  resetSilenceTimer();let interim='';
+  for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)finalTranscript+=e.results[i][0].transcript+' ';else interim+=e.results[i][0].transcript;}
+  const d=(finalTranscript+interim).trim();
+  if(d){outputEl.textContent=d;outputEl.classList.remove('empty');recordLabel.textContent='Aufnahme l\u00e4uft\u2026';setStatus(interim?'\u2026':'');}
+}
+function handleError(e){const m={'not-allowed':'Mikrofon nicht erlaubt.','no-speech':'Kein Sprachsignal.','network':'Netzwerkfehler.','audio-capture':'Kein Mikrofon.','aborted':''};if(m[e.error])setStatus(m[e.error],true);}
 
-function setRecordingUI(active) {
-  isRecording = active;
-  recordBtn.classList.toggle('recording', active);
-  subButtons.classList.toggle('visible', active);
-  micIcon.setAttribute('stroke', active ? '#e05a3a' : '#f0f0f0');
-  if (!active) {
-    isPaused = false;
-    pauseBtn.classList.remove('paused');
-    recordLabel.textContent = 'Tippen zum Starten';
-    recordLabel.classList.remove('active');
-  } else {
-    recordLabel.classList.add('active');
-  }
+function finishAndProcess(){
+  setRecordingUI(false);clearTimeout(silenceTimer);const t=finalTranscript.trim();
+  if(!t){setStatus('Kein Text erkannt.',true);return;}
+  if(currentMode==='normal'){setOutput(t);setStatus('');}
+  else if(currentMode==='suno'){processWithClaude(t,true);}
+  else{processWithClaude(t,false);}
 }
 
-function resetSilenceTimer() {
-  clearTimeout(silenceTimer);
-  if (isRecording && !isPaused) {
-    silenceTimer = setTimeout(() => {
-      if (recognition && isRecording && !isPaused) {
-        finishRecording();
-      }
-    }, SILENCE_TIMEOUT);
-  }
+function startRecording(){
+  finalTranscript='';isPaused=false;normalOutput.style.display='';sunoStepper.classList.remove('visible');
+  outputEl.textContent='Hier erscheint dein Text\u2026';outputEl.classList.add('empty');
+  recognition=new SR();recognition.lang='de-DE';recognition.continuous=true;recognition.interimResults=true;recognition.maxAlternatives=1;
+  recognition.onstart=()=>{setRecordingUI(true);recordLabel.textContent='Aufnahme l\u00e4uft\u2026';setStatus('Sprich jetzt \u2013 Stopp \u25A0 oder Pause \u23F8');};
+  recognition.onresult=handleResult;recognition.onerror=handleError;
+  recognition.onend=()=>{if(!isPaused&&isRecording)finishAndProcess();};
+  recognition.start();resetSilenceTimer();
 }
 
-function finishRecording() {
-  clearTimeout(silenceTimer);
-  if (recognition) recognition.stop();
-}
+const SUNO_SYSTEM=`Du bist ein Suno-Songprompt-Generator. Erstelle immer EXAKT 3 Bl\u00f6cke in dieser Reihenfolge, getrennt durch ===BLOCK=== auf einer eigenen Zeile:
 
-recordBtn.onclick = () => {
-  if (!SpeechRecognition) {
-    setStatus('Spracherkennung nicht verfügbar.', true);
-    return;
-  }
-  if (isRecording && !isPaused) {
-    finishRecording();
-    return;
-  }
-  if (isRecording && isPaused) {
-    resumeRecording();
-    return;
-  }
-  startRecording();
-};
+BLOCK 1 \u2013 SONGPROMPT:
+- Sprache: Englisch
+- Max. 800 Zeichen (STRIKT einhalten)
+- Keine echten K\u00fcnstlernamen \u2014 immer durch Stilbeschreibung ersetzen (z.B. statt "Pink Floyd" \u2192 "late 70s British psychedelic prog-rock with cinematic space and tape delay guitar")
+- Kein Songtitel
+- Bullet-Point-Struktur, keine Leerzeilen
+- Radikal verdichtet
+- Sections bedarfsgerecht: [Style Summary] [Tempo & Key] [Vocals] [Instruments] [Structure] [Arrangement \u2013 Space & Pauses] [Mix]
+- Vocals: Standard female voice only (nur \u00e4ndern wenn explizit anders gew\u00fcnscht)
+- Herkunft (UK/US/French etc.) ber\u00fccksichtigen
+- Was NICHT passieren soll immer mit rein
+- Vermeiden: Glossy radio pop, US-Arena-Rock wenn britisch, \u00dcberbelting, EDM-Build-Ups
 
-stopBtn.onclick = () => { finishRecording(); };
+BLOCK 2 \u2013 EXCLUDED STYLES:
+- Exakt eine Zeile, kommagetrennt
+- Keine Bulletpoints, keine Erkl\u00e4rung
 
-pauseBtn.onclick = () => {
-  if (isPaused) { resumeRecording(); }
-  else { pauseRecording(); }
-};
+BLOCK 3 \u2013 SONGTEXT:
+- Sprache: Englisch (au\u00dfer explizit anders gew\u00fcnscht)
+- Klare Sections: [Verse] [Pre-Chorus] [Chorus] [Bridge] [Outro] etc.
+- Songstruktur bedarfsgerecht variieren
+- Textpausen zwischen Sections einplanen (Instrumentalteile)
+- Catchlines wiederholen wenn gew\u00fcnscht
+- Keine echten K\u00fcnstler zitieren
 
-function pauseRecording() {
-  isPaused = true;
-  clearTimeout(silenceTimer);
-  if (recognition) recognition.stop();
-  pauseBtn.classList.add('paused');
-  recordLabel.textContent = 'Pause – tippe ▶ oder Mikrofon';
-  setStatus('Pausiert – denk nach…');
-}
+FORMAT STRIKT:
+Block1-Inhalt
+===BLOCK===
+Block2-Inhalt
+===BLOCK===
+Block3-Inhalt
 
-function resumeRecording() {
-  isPaused = false;
-  pauseBtn.classList.remove('paused');
-  const rec = new SpeechRecognition();
-  rec.lang = 'de-DE';
-  rec.continuous = true;
-  rec.interimResults = true;
-  rec.maxAlternatives = 1;
+Kein Markdown, keine Codeblock-Backticks, kein Flie\u00dftext dazwischen. Nur die drei Bl\u00f6cke.`;
 
-  rec.onresult = handleResult;
-  rec.onerror = handleError;
-  rec.onend = () => {
-    if (isPaused) return;
-    if (isRecording) {
-      finishAndProcess();
-    }
+async function processWithClaude(text,isSuno){
+  const key=localStorage.getItem('ft_key');
+  if(!key){setOutput(text);setStatus('Kein API Key \u2013 Key im \u2699 eintragen.',true);return;}
+  dotsWrap.classList.add('visible');dotsLabel.textContent=isSuno?'Song wird generiert\u2026':'Wird verarbeitet\u2026';setStatus('');
+  const prompts={
+    plus:`Du erh\u00e4ltst gesprochenen Text. Formuliere ihn schriftlicher und klarer, behalte Sinn und Kernaussage exakt. Gib nur den umformulierten Text aus, keine Erkl\u00e4rungen.\n\nText: ${text}`,
+    rage:`Du erh\u00e4ltst w\u00fctenden oder frustrierten Text. Formuliere ihn h\u00f6flich und professionell um, behalte die Kernaussage. Gib nur den umformulierten Text aus, keine Erkl\u00e4rungen.\n\nText: ${text}`,
+    emoji:`Du erh\u00e4ltst einen Text. F\u00fcge ${EMOJI_COUNTS[emojiLevel]} passende Emojis ein (Dichte: ${EMOJI_LABELS[emojiLevel]}). Platziere sie nat\u00fcrlich im Text. Gib nur den Text mit Emojis aus, keine Erkl\u00e4rungen.\n\nText: ${text}`,
+    bullet:`Du erh\u00e4ltst gesprochenen Text. Wandle ihn in eine klare Stichpunktliste um. Nutze \u2013 als Aufz\u00e4hlungszeichen. Gruppiere thematisch wenn sinnvoll. Gib nur die Stichpunkte aus, keine Erkl\u00e4rungen.\n\nText: ${text}`,
+    berlin:`Du erh\u00e4ltst einen Text. Schreib ihn auf Berlinerisch um \u2013 mit typischem Berliner Dialekt: "ick", "det", "wat", "ooch", "n\u00fcscht", "keen", "jut", "allet", "uff", "ma". Authentisch, herzlich, direkt. Gib nur den Berliner Text aus, keine Erkl\u00e4rungen.\n\nText: ${text}`,
+    prompt:`Du erh\u00e4ltst gesprochenen, unstrukturierten Text. Formuliere daraus einen pr\u00e4zisen, gut strukturierten Prompt f\u00fcr Claude. Der Prompt soll: klares Ziel haben, Kontext enthalten, das gew\u00fcnschte Ausgabeformat definieren, und direkt verwendbar sein. Gib nur den fertigen Prompt aus, keine Erkl\u00e4rungen.\n\nText: ${text}`
   };
-
-  recognition = rec;
-  rec.start();
-  recordLabel.textContent = 'Aufnahme läuft…';
-  setStatus('Sprich weiter…');
-  resetSilenceTimer();
+  const messages=[{role:'user',content:isSuno?`Erstelle einen Suno-Song basierend auf dieser Beschreibung:\n\n${text}`:prompts[currentMode]}];
+  const body={model:isSuno?'claude-sonnet-4-20250514':'claude-haiku-4-5-20251001',max_tokens:isSuno?4000:1000,messages};
+  if(isSuno)body.system=SUNO_SYSTEM;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify(body)});
+    const data=await res.json();if(data.error)throw new Error(data.error.message);
+    const result=data.content?.[0]?.text||text;
+    if(isSuno)parseSunoResponse(result);else setOutput(result);
+  }catch(err){setOutput(text);const msg=err.message||'Unbekannt';setStatus('\u26A0 '+msg,true);alert('API Fehler: '+msg);}
+  finally{dotsWrap.classList.remove('visible');}
 }
 
-function handleResult(e) {
-  resetSilenceTimer();
-  let interim = '';
-  for (let i = e.resultIndex; i < e.results.length; i++) {
-    if (e.results[i].isFinal) {
-      finalTranscript += e.results[i][0].transcript + ' ';
-    } else {
-      interim += e.results[i][0].transcript;
-    }
-  }
-  const display = (finalTranscript + interim).trim();
-  if (display) {
-    outputEl.textContent = display;
-    outputEl.classList.remove('empty');
-    recordLabel.textContent = 'Aufnahme läuft…';
-    setStatus(interim ? '…' : '');
-  }
+function parseSunoResponse(text){
+  let blocks=text.split('===BLOCK===').map(b=>b.trim());
+  if(blocks.length<3){const rx=/```[^\n]*\n([\s\S]*?)```/g;const m=[];let x;while((x=rx.exec(text))!==null)m.push(x[1].trim());if(m.length>=3)blocks=m;}
+  if(blocks.length<3)blocks=text.split(/\n{3,}/).map(b=>b.trim()).filter(b=>b.length>10);
+  sunoBlocks=blocks.length>=3?[blocks[0],blocks[1],blocks[2]]:[text,'',''];
+  if(blocks.length<3)setStatus('Konnte nicht in 3 Bl\u00f6cke aufteilen.',true);
+  sunoStep=0;showSunoStep();
 }
 
-function handleError(e) {
-  const msgs = {
-    'not-allowed': 'Mikrofon nicht erlaubt.',
-    'no-speech': 'Kein Sprachsignal.',
-    'network': 'Netzwerkfehler.',
-    'audio-capture': 'Kein Mikrofon.',
-    'aborted': ''
-  };
-  const msg = msgs[e.error];
-  if (msg) setStatus(msg, true);
+function showSunoStep(){
+  normalOutput.style.display='none';sunoStepper.classList.add('visible');
+  sunoStepTitle.textContent=SUNO_TITLES[sunoStep];sunoStepCounter.textContent=`${sunoStep+1} / 3`;
+  sunoContent.textContent=sunoBlocks[sunoStep];
+  if(sunoStep===0){const l=sunoBlocks[0].length;sunoCharcount.textContent=`${l} / 800 Zeichen${l>800?' \u26A0 zu lang!':''}`;sunoCharcount.style.color=l>800?'#e05a3a':'var(--text-hint)';sunoCharcount.style.display='';}
+  else sunoCharcount.style.display='none';
+  for(let i=0;i<3;i++){const d=$('sunoDot'+i);d.className='suno-dot'+(i===sunoStep?' active':'')+(i<sunoStep?' done':'');}
+  sunoBackBtn.style.display=sunoStep===0?'none':'';
+  sunoCopyBtn.textContent=sunoStep<2?'Kopieren & Weiter \u2192':'Kopieren \u2714';
 }
 
-function finishAndProcess() {
-  setRecordingUI(false);
-  clearTimeout(silenceTimer);
-  const text = finalTranscript.trim();
-  if (!text) { setStatus('Kein Text erkannt.', true); return; }
-  if (currentMode !== 'normal') {
-    processWithClaude(text);
-  } else {
-    setOutput(text);
-    setStatus('');
-  }
-}
+function doCopy(text,cb){navigator.clipboard.writeText(text).then(cb).catch(()=>{const t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);cb();});}
 
-function startRecording() {
-  finalTranscript = '';
-  isPaused = false;
-  recognition = new SpeechRecognition();
-  recognition.lang = 'de-DE';
-  recognition.continuous = true;
-  recognition.interimResults = true;
-  recognition.maxAlternatives = 1;
-
-  recognition.onstart = () => {
-    setRecordingUI(true);
-    recordLabel.textContent = 'Aufnahme läuft…';
-    setStatus('Sprich jetzt – Stopp ■ oder Pause ⏸ tippen');
-  };
-
-  recognition.onresult = handleResult;
-  recognition.onerror = handleError;
-
-  recognition.onend = () => {
-    if (isPaused) return;
-    if (isRecording) {
-      finishAndProcess();
-    }
-  };
-
-  recognition.start();
-  resetSilenceTimer();
-}
-
-async function processWithClaude(text) {
-  const key = localStorage.getItem('bt_key');
-  if (!key) {
-    setOutput(text);
-    setStatus('Kein API Key hinterlegt – Normal-Modus verwendet. Key im ⚙ eintragen.', true);
-    return;
-  }
-
-  dotsWrap.classList.add('visible');
-  setStatus('');
-
-  const prompts = {
-    plus: `Du erhältst gesprochenen Text. Formuliere ihn schriftlicher und klarer, behalte Sinn und Kernaussage exakt. Gib nur den umformulierten Text aus, keine Erklärungen.\n\nText: ${text}`,
-    rage: `Du erhältst wütenden oder frustrierten Text. Formuliere ihn höflich und professionell um, behalte die Kernaussage. Gib nur den umformulierten Text aus, keine Erklärungen.\n\nText: ${text}`,
-    emoji: `Du erhältst einen Text. Füge ${EMOJI_COUNTS[emojiLevel]} passende Emojis ein (Dichte: ${EMOJI_LABELS[emojiLevel]}). Platziere sie natürlich im Text. Gib nur den Text mit Emojis aus, keine Erklärungen.\n\nText: ${text}`,
-    bullet: `Du erhältst gesprochenen Text. Wandle ihn in eine klare Stichpunktliste um. Nutze – als Aufzählungszeichen. Gruppiere thematisch wenn sinnvoll. Gib nur die Stichpunkte aus, keine Erklärungen.\n\nText: ${text}`,
-    berlin: `Du erhältst einen Text. Schreib ihn auf Berlinerisch um – mit typischem Berliner Dialekt, Ausdrücken wie "ick", "det", "wat", "ooch", "nüscht", "keen", "jut", "allet", "uff", "ma". Authentisch, herzlich, direkt. Gib nur den Berliner Text aus, keine Erklärungen.\n\nText: ${text}`,
-    prompt: `Du erhältst gesprochenen, unstrukturierten Text. Formuliere daraus einen präzisen, gut strukturierten Prompt für Claude oder ein anderes KI-Modell. Der Prompt soll: klares Ziel haben, Kontext enthalten, das gewünschte Ausgabeformat definieren, und direkt verwendbar sein. Gib nur den fertigen Prompt aus, keine Erklärungen.\n\nText: ${text}`
-  };
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompts[currentMode] }]
-      })
-    });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
-    setOutput(data.content?.[0]?.text || text);
-  } catch (err) {
-    setOutput(text);
-    const msg = err.message || 'Unbekannt'; setStatus('⚠ ' + msg, true); alert('API Fehler: ' + msg);
-  } finally {
-    dotsWrap.classList.remove('visible');
-  }
-}
-
-copyBtn.onclick = () => {
-  if (!outputText) return;
-  navigator.clipboard.writeText(outputText).then(() => {
-    const old = copyBtn.textContent;
-    copyBtn.textContent = 'Kopiert ✓';
-    setTimeout(() => { copyBtn.textContent = old; }, 1500);
-  }).catch(() => {
-    const ta = document.createElement('textarea');
-    ta.value = outputText;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    copyBtn.textContent = 'Kopiert ✓';
-    setTimeout(() => { copyBtn.textContent = 'Kopieren'; }, 1500);
+sunoCopyBtn.onclick=()=>{
+  doCopy(sunoBlocks[sunoStep],()=>{
+    sunoCopyBtn.textContent='Kopiert!';
+    setTimeout(()=>{if(sunoStep<2){sunoStep++;showSunoStep();}else{sunoCopyBtn.textContent='Alles kopiert \u2714';setStatus('Fertig \u2013 alle 3 Bl\u00f6cke in Suno einf\u00fcgen.');}},600);
   });
 };
+sunoBackBtn.onclick=()=>{if(sunoStep>0){sunoStep--;showSunoStep();}};
+sunoResetBtn.onclick=()=>{sunoBlocks=[];sunoStep=0;sunoStepper.classList.remove('visible');normalOutput.style.display='';outputEl.textContent='Hier erscheint dein Text\u2026';outputEl.classList.add('empty');setStatus('');};
 
-clearBtn.onclick = () => {
-  outputText = '';
-  outputEl.textContent = 'Hier erscheint dein Text…';
-  outputEl.classList.add('empty');
-  copyBtn.disabled = true;
-  setStatus('');
-};
+copyBtn.onclick=()=>{if(!outputText)return;doCopy(outputText,()=>{copyBtn.textContent='Kopiert \u2714';setTimeout(()=>{copyBtn.textContent='Kopieren';},1500);});};
+clearBtn.onclick=()=>{outputText='';outputEl.textContent='Hier erscheint dein Text\u2026';outputEl.classList.add('empty');copyBtn.disabled=true;setStatus('');};
 </script>
 </body>
 </html>
