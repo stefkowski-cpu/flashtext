@@ -98,21 +98,10 @@
 <div class="app">
   <div class="header">
     <div class="logo">Flash<span>text</span></div>
-    <button class="settings-btn" id="settingsToggle">&#9881;</button>
-  </div>
-  <div class="modes">
-    <button class="mode-btn active" data-mode="normal"><div class="mode-name">Normal</div><div class="mode-desc">Exakt wie gesprochen</div></button>
-    <button class="mode-btn" data-mode="plus"><div class="mode-name">Flashtext Plus</div><div class="mode-desc">Schriftlicher formuliert</div></button>
-    <button class="mode-btn rage-mode" data-mode="rage"><div class="mode-name">Rage Mode</div><div class="mode-desc">Wut &#8594; freundlich</div></button>
-    <button class="mode-btn" data-mode="emoji"><div class="mode-name">Emoji Mode</div><div class="mode-desc">Mit Emojis anreichern</div></button>
-    <button class="mode-btn" data-mode="bullet"><div class="mode-name">Bullet-Modus</div><div class="mode-desc">Stichpunkte &amp; Struktur</div></button>
-    <button class="mode-btn" data-mode="berlin"><div class="mode-name">Berlinerisch</div><div class="mode-desc">Allet uff Berlinerisch</div></button>
-    <button class="mode-btn" data-mode="prompt"><div class="mode-name">Claude Prompt</div><div class="mode-desc">Optimiert f&#252;r KI</div></button>
-    <button class="mode-btn suno-mode" data-mode="suno"><div class="mode-name">Suno</div><div class="mode-desc">Song-Prompt Generator</div></button>
-  </div>
-  <div class="emoji-slider-wrap" id="emojiSlider">
-    <div class="slider-header">Emoji-Dichte <strong id="emojiLabel">mittel</strong></div>
-    <input type="range" id="emojiRange" min="1" max="3" step="1" value="2">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div id="modeIndicator" style="font-size:12px;color:var(--accent);background:var(--accent-dim);padding:4px 10px;border-radius:20px;cursor:pointer;" onclick="document.querySelector('.modes').scrollIntoView({behavior:'smooth'})">Normal</div>
+      <button class="settings-btn" id="settingsToggle">&#9881;</button>
+    </div>
   </div>
   <div class="record-wrap">
     <button class="record-btn" id="recordBtn">
@@ -151,6 +140,20 @@
     </div>
     <button class="suno-reset-btn" id="sunoResetBtn">Neuer Song</button>
   </div>
+  <div class="modes">
+    <button class="mode-btn active" data-mode="normal"><div class="mode-name">Normal</div><div class="mode-desc">Exakt wie gesprochen</div></button>
+    <button class="mode-btn" data-mode="plus"><div class="mode-name">Flashtext Plus</div><div class="mode-desc">Schriftlicher formuliert</div></button>
+    <button class="mode-btn rage-mode" data-mode="rage"><div class="mode-name">Rage Mode</div><div class="mode-desc">Wut &#8594; freundlich</div></button>
+    <button class="mode-btn" data-mode="emoji"><div class="mode-name">Emoji Mode</div><div class="mode-desc">Mit Emojis anreichern</div></button>
+    <button class="mode-btn" data-mode="bullet"><div class="mode-name">Bullet-Modus</div><div class="mode-desc">Stichpunkte &amp; Struktur</div></button>
+    <button class="mode-btn" data-mode="berlin"><div class="mode-name">Berlinerisch</div><div class="mode-desc">Allet uff Berlinerisch</div></button>
+    <button class="mode-btn" data-mode="prompt"><div class="mode-name">Claude Prompt</div><div class="mode-desc">Optimiert f&#252;r KI</div></button>
+    <button class="mode-btn suno-mode" data-mode="suno"><div class="mode-name">Suno</div><div class="mode-desc">Song-Prompt Generator</div></button>
+  </div>
+  <div class="emoji-slider-wrap" id="emojiSlider">
+    <div class="slider-header">Emoji-Dichte <strong id="emojiLabel">mittel</strong></div>
+    <input type="range" id="emojiRange" min="1" max="3" step="1" value="2">
+  </div>
   <div class="status" id="status"></div>
 </div>
 <div class="settings-panel" id="settingsPanel">
@@ -169,7 +172,7 @@ const EMOJI_COUNTS={1:'1-2',2:'3-5',3:'6-8'};
 let currentMode='normal',emojiLevel=2,isRecording=false,isPaused=false,recognition=null,outputText='',finalTranscript='',silenceTimer=null;
 const SILENCE_TIMEOUT=12000;
 let sunoBlocks=[],sunoStep=0;
-const SUNO_TITLES=['Songprompt','Excluded Styles','Songtext'];
+const SUNO_TITLES=['Songtext','Songprompt','Excluded Styles'];
 const $=id=>document.getElementById(id);
 const recordBtn=$('recordBtn'),recordLabel=$('recordLabel'),micIcon=$('micIcon'),outputEl=$('output'),copyBtn=$('copyBtn'),clearBtn=$('clearBtn'),statusEl=$('status'),dotsWrap=$('dotsWrap'),dotsLabel=$('dotsLabel'),emojiSliderEl=$('emojiSlider'),emojiRange=$('emojiRange'),emojiLabelEl=$('emojiLabel'),subButtons=$('subButtons'),pauseBtn=$('pauseBtn'),stopBtnEl=$('stopBtn'),normalOutput=$('normalOutput'),sunoStepper=$('sunoStepper'),sunoContent=$('sunoContent'),sunoStepTitle=$('sunoStepTitle'),sunoStepCounter=$('sunoStepCounter'),sunoCharcount=$('sunoCharcount'),sunoCopyBtn=$('sunoCopyBtn'),sunoBackBtn=$('sunoBackBtn'),sunoResetBtn=$('sunoResetBtn');
 
@@ -179,7 +182,9 @@ document.querySelectorAll('.mode-btn').forEach(btn=>{
   btn.onclick=()=>{
     document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    currentMode=btn.dataset.mode;
+    currentMode=btn.dataset.mode;$('modeIndicator').textContent=btn.querySelector('.mode-name').textContent;
+    const mi=$('modeIndicator');const cols={normal:['var(--accent)','var(--accent-dim)'],plus:['var(--accent)','var(--accent-dim)'],rage:['var(--rage)','var(--rage-dim)'],emoji:['var(--accent)','var(--accent-dim)'],bullet:['var(--accent)','var(--accent-dim)'],berlin:['var(--accent)','var(--accent-dim)'],prompt:['var(--accent)','var(--accent-dim)'],suno:['var(--suno)','var(--suno-dim)']};
+    const cl=cols[currentMode]||cols.normal;mi.style.color=cl[0];mi.style.background=cl[1];
     emojiSliderEl.classList.toggle('visible',currentMode==='emoji');
     if(currentMode!=='suno'){sunoStepper.classList.remove('visible');normalOutput.style.display='';}
   };
@@ -307,7 +312,7 @@ function parseSunoResponse(text){
   let blocks=text.split('===BLOCK===').map(b=>b.trim());
   if(blocks.length<3){const rx=/```[^\n]*\n([\s\S]*?)```/g;const m=[];let x;while((x=rx.exec(text))!==null)m.push(x[1].trim());if(m.length>=3)blocks=m;}
   if(blocks.length<3)blocks=text.split(/\n{3,}/).map(b=>b.trim()).filter(b=>b.length>10);
-  sunoBlocks=blocks.length>=3?[blocks[0],blocks[1],blocks[2]]:[text,'',''];
+  sunoBlocks=blocks.length>=3?[blocks[2],blocks[0],blocks[1]]:[text,'',''];
   if(blocks.length<3)setStatus('Konnte nicht in 3 Bl\u00f6cke aufteilen.',true);
   sunoStep=0;showSunoStep();
 }
@@ -316,7 +321,7 @@ function showSunoStep(){
   normalOutput.style.display='none';sunoStepper.classList.add('visible');
   sunoStepTitle.textContent=SUNO_TITLES[sunoStep];sunoStepCounter.textContent=`${sunoStep+1} / 3`;
   sunoContent.textContent=sunoBlocks[sunoStep];
-  if(sunoStep===0){const l=sunoBlocks[0].length;sunoCharcount.textContent=`${l} / 800 Zeichen${l>800?' \u26A0 zu lang!':''}`;sunoCharcount.style.color=l>800?'#e05a3a':'var(--text-hint)';sunoCharcount.style.display='';}
+  if(sunoStep===1){const l=sunoBlocks[1].length;sunoCharcount.textContent=`${l} / 800 Zeichen${l>800?' \u26A0 zu lang!':''}`;sunoCharcount.style.color=l>800?'#e05a3a':'var(--text-hint)';sunoCharcount.style.display='';}
   else sunoCharcount.style.display='none';
   for(let i=0;i<3;i++){const d=$('sunoDot'+i);d.className='suno-dot'+(i===sunoStep?' active':'')+(i<sunoStep?' done':'');}
   sunoBackBtn.style.display=sunoStep===0?'none':'';
