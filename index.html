@@ -383,7 +383,7 @@ async function processWithClaude(text) {
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 1000,
@@ -395,7 +395,7 @@ async function processWithClaude(text) {
     setOutput(data.content?.[0]?.text || text);
   } catch (err) {
     setOutput(text);
-    setStatus('Verarbeitung fehlgeschlagen: ' + err.message, true);
+    const msg = err.message || 'Unbekannt'; setStatus('⚠ ' + msg, true); alert('API Fehler: ' + msg);
   } finally {
     dotsWrap.classList.remove('visible');
   }
