@@ -175,6 +175,18 @@
       <div class="mode-name">Emoji Mode</div>
       <div class="mode-desc">Mit Emojis anreichern</div>
     </button>
+    <button class="mode-btn" data-mode="bullet">
+      <div class="mode-name">Bullet-Modus</div>
+      <div class="mode-desc">Stichpunkte &amp; Struktur</div>
+    </button>
+    <button class="mode-btn" data-mode="berlin">
+      <div class="mode-name">Berlinerisch</div>
+      <div class="mode-desc">Allet uff Berlinerisch</div>
+    </button>
+    <button class="mode-btn" data-mode="prompt">
+      <div class="mode-name">Claude Prompt</div>
+      <div class="mode-desc">Optimiert für KI</div>
+    </button>
   </div>
 
   <div class="emoji-slider-wrap" id="emojiSlider">
@@ -377,7 +389,10 @@ async function processWithClaude(text) {
   const prompts = {
     plus: `Du erhältst gesprochenen Text. Formuliere ihn schriftlicher und klarer, behalte Sinn und Kernaussage exakt. Gib nur den umformulierten Text aus, keine Erklärungen.\n\nText: ${text}`,
     rage: `Du erhältst wütenden oder frustrierten Text. Formuliere ihn höflich und professionell um, behalte die Kernaussage. Gib nur den umformulierten Text aus, keine Erklärungen.\n\nText: ${text}`,
-    emoji: `Du erhältst einen Text. Füge ${EMOJI_COUNTS[emojiLevel]} passende Emojis ein (Dichte: ${EMOJI_LABELS[emojiLevel]}). Platziere sie natürlich im Text. Gib nur den Text mit Emojis aus, keine Erklärungen.\n\nText: ${text}`
+    emoji: `Du erhältst einen Text. Füge ${EMOJI_COUNTS[emojiLevel]} passende Emojis ein (Dichte: ${EMOJI_LABELS[emojiLevel]}). Platziere sie natürlich im Text. Gib nur den Text mit Emojis aus, keine Erklärungen.\n\nText: ${text}`,
+    bullet: `Du erhältst gesprochenen Text. Wandle ihn in eine klare Stichpunktliste um. Nutze – als Aufzählungszeichen. Gruppiere thematisch wenn sinnvoll. Gib nur die Stichpunkte aus, keine Erklärungen.\n\nText: ${text}`,
+    berlin: `Du erhältst einen Text. Schreib ihn auf Berlinerisch um – mit typischem Berliner Dialekt, Ausdrücken wie "ick", "det", "wat", "ooch", "nüscht", "keen", "jut", "allet", "uff", "ma". Authentisch, herzlich, direkt. Gib nur den Berliner Text aus, keine Erklärungen.\n\nText: ${text}`,
+    prompt: `Du erhältst gesprochenen, unstrukturierten Text. Formuliere daraus einen präzisen, gut strukturierten Prompt für Claude oder ein anderes KI-Modell. Der Prompt soll: klares Ziel haben, Kontext enthalten, das gewünschte Ausgabeformat definieren, und direkt verwendbar sein. Gib nur den fertigen Prompt aus, keine Erklärungen.\n\nText: ${text}`
   };
 
   try {
